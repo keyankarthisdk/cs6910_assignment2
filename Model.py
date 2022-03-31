@@ -17,6 +17,24 @@ from Dataset import *
 # Model Functions
 # Part A Functions
 # Build Sequential Model Function @ Karthikeyan S CS21M028
+def Model_SequentialBlocks(X_shape, Y_shape, Blocks, **params):
+    '''
+    Sequential Model
+    '''
+    # Init Model
+    model = Sequential()
+
+    # Add Blocks
+    cur_shape = X_shape
+    for i in range(len(Blocks)):
+        model, cur_shape = Blocks[i](model, cur_shape, block_name="block_" + str(i))
+
+    # Output Layer
+    model.add(Flatten(name="flatten"))
+    model.add(Dense(params["dense_n_neurons"], activation="relu", name="output_dense"))
+    model.add(Dropout(params["dense_dropout_rate"], name="output_dropout"))
+    model.add(Dense(Y_shape, activation="softmax", name="output_softmax"))
+    return model
 
 # Part B Functions
 # Build Pretrained Model Function @ Karthikeyan S CS21M028
@@ -24,6 +42,12 @@ from Dataset import *
 
 # Common Functions
 # Compile Model Function @ Karthikeyan S CS21M028
+def Model_Compile(model, loss_fn="categorical_crossentropy", optimizer="adam", metrics=["accuracy"], **params):
+    '''
+    Compile Model
+    '''
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=metrics)
+    return model
 
 # Train Model Function @ N Kausik CS21M037
 def Model_Train(model, inputs, n_epochs, wandb_data, **params):
