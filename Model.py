@@ -9,6 +9,7 @@ import math
 from keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
+import tensorflow.keras as TFKeras
 
 from Library.ModelBlocks import *
 from Dataset import *
@@ -38,7 +39,52 @@ def Model_SequentialBlocks(X_shape, Y_shape, Blocks, **params):
 
 # Part B Functions
 # Build Pretrained Model Function @ Karthikeyan S CS21M028
-# Main Vars
+def Model_PretrainedBlocks(X_shape, Y_shape, model_name, **params):
+    '''
+    Sequential Model
+    '''
+    # Init Input Layer
+    inputLayer = TFKeras.Input(shape=X_shape, name="input")
+    # Load Pretrained Model
+    pretrainedModel = Model_LoadPretrainedModel(model_name, inputLayer)
+
+    # Freeze All Layers
+    for layer in pretrainedModel.layers: layer.trainable = False
+    # Unfreeze Top few Layers
+    if params["unfreeze_count"] > 0:
+        for layer in pretrainedModel.layers[-params["unfreeze_count"]:]: layer.trainable=True
+
+    # Build Final Model
+    model = TFKeras.models.Sequential()
+    # Pretrained Layer
+    model.add(pretrainedModel)
+    # Output Layer
+    model.add(Flatten(name="flatten"))
+    model.add(Dense(params["dense_n_neurons"], activation="relu", name="output_dense"))
+    model.add(Dropout(params["dense_dropout_rate"], name="output_dropout"))
+    model.add(Dense(Y_shape, activation="softmax", name="output_softmax"))
+    return model
+
+# Pretrained Models Functions
+PRETRAINED_MODELS = {
+    "ResNet50": TFKeras.applications.ResNet50,
+    "Xception": TFKeras.applications.Xception,
+    "InceptionV3": TFKeras.applications.InceptionV3,
+    "InceptionResNetV2": TFKeras.applications.InceptionResNetV2,
+    "VGG19": TFKeras.applications.VGG19
+}
+
+def Model_LoadPretrainedModel(name, inputLayer):
+    '''
+    Get Pretrained Model
+    '''
+    # Get Model
+    pretrainedModel = PRETRAINED_MODELS[name](
+        include_top=False, weights="imagenet",
+        input_tensor=inputLayer
+    )
+
+    return pretrainedModel
 
 # Common Functions
 # Compile Model Function @ Karthikeyan S CS21M028
