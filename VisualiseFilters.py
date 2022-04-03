@@ -25,11 +25,12 @@ def VisualiseFilter_Display(MODEL, rgb=True, nCols=4):
         if rgb:
             plt.subplot(math.ceil(N_FILTERS/nCols), nCols, f_i)
             plt.imshow(f)
+            f_i += 1
         else:
             for j in range(f.shape[2]):
                 plt.subplot(N_FILTERS, f.shape[2], f_i)
                 plt.imshow(f[:, :, j], cmap='gray')
-        f_i += 1
+                f_i += 1
     plt.show()
 
 # Run
