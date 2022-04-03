@@ -4,14 +4,19 @@ Questions Part B
 
 # Imports
 import json
+import argparse
 import functools
 from pprint import pprint
 
 from Model import *
+from TestModel import *
 
 # Main Functions
 # Wandb Sweep Function for Part B @ N Kausik CS21M037
 def Model_Sweep_Run(wandb_data):
+    '''
+    Part B Model Sweep Runner
+    '''
     # Init
     wandb.init()
 
@@ -87,54 +92,96 @@ def Model_Sweep_Run(wandb_data):
     # wandb.run.name = run_name
     wandb.finish()
 
-# Run
-# Params
-WANDB_DATA = json.load(open("config.json", "r"))
-# Params
+# Runner Functions
+def Runner_ParseArgs():
+    '''
+    Parse Args
+    '''
+    parser = argparse.ArgumentParser(description="Training and Testing for DL Assignment 2 Part B")
 
-# Run
-# Sweep Setup
-SWEEP_CONFIG = {
-    "name": "part-b-run-1",
-    "method": "grid",
-    "metric": {
-        "name": "val_accuracy",
-        "goal": "maximize"
-    },
-    "parameters": {
-        "model_name":{
-            "values": ["Xception"]
-        },
+    parser.add_argument("--mode", "-m", type=str, default="train", help="train or test")
+    parser.add_argument("--model", "-ml", type=str, default="Models/Model_PartB.h5", help="Model path to use or save to")
 
-        "n_epochs": {
-            "values": [10]
-        },
-        "batch_size": {
-            "values": [512]
-        },
-        "data_aug":{
-            "values": [True]
-        },
+    parser.add_argument("--epochs", "-e", type=int, default=10, help="Number of epochs to train")
+    parser.add_argument("--batch_size", "-b", type=int, default=256, help="Batch size")
+    parser.add_argument("--no_data_aug", "-nda", action='store_false', help="Dont use Data Augmentation")
 
-        "unfreeze_count":{
-            "values": [20]
-        },
+    parser.add_argument("--unfreeze_count", "-uc", type=int, default=10, help="Number of top layers to unfreeze")
+    parser.add_argument("--dense_neurons", "-dn", type=int, default=512, help="Number of Dense Layer Neurons")
+    parser.add_argument("--dense_dropout", "-dd", type=float, default=0.1, help="Dense Layer Dropout")
 
-        "dense_neurons": {
-            "values": [512]
-        },
-        "dense_dropout": {
-            "values": [0.1]
-        },
+    parser.add_argument("--learning_rate", "-lr", type=float, default=0.0001, help="Learning rate")
 
-        "lr": {
-            "values": [0.0001]
+    args = parser.parse_args()
+    return args
+
+def Runner_PartB_Train(args):
+    '''
+    Pretrain/Finetune Model
+    '''
+    # Load Wandb Data
+    WANDB_DATA = json.load(open("config.json", "r"))
+    # Sweep Setup
+    SWEEP_CONFIG = {
+        "name": "part-b-run-1",
+        "method": "grid",
+        "metric": {
+            "name": "val_accuracy",
+            "goal": "maximize"
+        },
+        "parameters": {
+            "model_name":{
+                "values": ["Xception"]
+            },
+
+            "n_epochs": {
+                "values": [args.epochs]
+            },
+            "batch_size": {
+                "values": [args.batch_size]
+            },
+            "data_aug":{
+                "values": [args.no_data_aug]
+            },
+
+            "unfreeze_count":{
+                "values": [args.unfreeze_count]
+            },
+
+            "dense_neurons": {
+                "values": [args.dense_neurons]
+            },
+            "dense_dropout": {
+                "values": [args.dense_dropout]
+            },
+
+            "lr": {
+                "values": [args.learning_rate]
+            }
         }
     }
-}
+    # Run Sweep
+    sweep_id = wandb.sweep(SWEEP_CONFIG, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"])
+    # sweep_id = ""
+    TRAINER_FUNC = functools.partial(Model_Sweep_Run, wandb_data=WANDB_DATA)
+    wandb.agent(sweep_id, TRAINER_FUNC, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"], count=1)
+    # Save Model
+    Model_SaveModel(Model_LoadModel("Models/best_model.h5"), args.model)
 
-# Run Sweep
-sweep_id = wandb.sweep(SWEEP_CONFIG, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"])
-# sweep_id = ""
-TRAINER_FUNC = functools.partial(Model_Sweep_Run, wandb_data=WANDB_DATA)
-wandb.agent(sweep_id, TRAINER_FUNC, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"], count=1)
+def Runner_PartB_Test(args):
+    '''
+    Test Model
+    '''
+    TestModel_RunTest(Model_LoadModel(args.model), X_shape=(224, 224, 3), Y_shape=len(DATASET_INATURALIST_CLASSES))
+
+# Run
+if __name__ == "__main__":
+    # Parse Args
+    ARGS = Runner_ParseArgs()
+    # Run
+    if ARGS.mode == "train":
+        Runner_PartB_Train(ARGS)
+    elif ARGS.mode == "test":
+        Runner_PartB_Test(ARGS)
+    else:
+        print("Invalid Mode!")

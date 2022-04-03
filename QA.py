@@ -4,14 +4,21 @@ Questions Part A
 
 # Imports
 import json
+import argparse
 import functools
 from pprint import pprint
 
 from Model import *
+from TestModel import *
+from GuidedBackprop import *
+from VisualiseFilters import *
 
 # Main Functions
 # Wandb Sweep Function for Part A @ Karthikeyan S CS21M028
 def Model_Sweep_Run(wandb_data):
+    '''
+    Part A Model Sweep Runner
+    '''
     # Init
     wandb.init()
 
@@ -100,60 +107,125 @@ def Model_Sweep_Run(wandb_data):
     # wandb.run.name = run_name
     wandb.finish()
 
-# Run
-# Params
-WANDB_DATA = json.load(open("config.json", "r"))
-# Params
+# Runner Functions
+def Runner_ParseArgs():
+    '''
+    Parse Args
+    '''
+    parser = argparse.ArgumentParser(description="Training and Testing for DL Assignment 2 Part A")
 
-# Run
-# Sweep Setup
-SWEEP_CONFIG = {
-    "name": "part-a-run-1",
-    "method": "grid",
-    "metric": {
-        "name": "val_accuracy",
-        "goal": "maximize"
-    },
-    "parameters": {
-        "n_epochs": {
-            "values": [10]
-        },
-        "batch_size": {
-            "values": [128]
-        },
+    parser.add_argument("--mode", "-m", type=str, default="train", help="train | test | gb | vf")
+    parser.add_argument("--model", "-ml", type=str, default="Models/Model_PartA.h5", help="Model path to use or save to")
 
-        "filter_size": {
-            "values": [
-                [3, 3, 3, 5, 7]
-            ]
-        },
-        "n_filters": {
-            "values": [
-                [32, 64, 64, 128, 128]
-            ]
-        },
-        "dropout": {
-            "values": [0.1]
-        },
-        "batch_norm": {
-            "values": [True]
-        },
+    # Train Args
+    parser.add_argument("--epochs", "-e", type=int, default=20, help="Number of epochs to train")
+    parser.add_argument("--batch_size", "-b", type=int, default=128, help="Batch size")
 
-        "dense_neurons": {
-            "values": [512]
-        },
-        "dense_dropout": {
-            "values": [0.1]
-        },
+    parser.add_argument("--filter_size", "-fs", type=str, default="3,3,3,5,7", help="Filter sizes")
+    parser.add_argument("--n_filters", "-nf", type=str, default="32,64,64,128,128", help="Number of filters")
+    parser.add_argument("--dropout", "-dp", type=float, default=0.1, help="Layerwise dropout")
+    parser.add_argument("--no_batch_norm", "-nbn", action='store_false', help="Dont use Batch Normalisation")
+    parser.add_argument("--dense_neurons", "-dn", type=int, default=512, help="Number of Dense Layer Neurons")
+    parser.add_argument("--dense_dropout", "-dd", type=float, default=0.1, help="Dense Layer Dropout")
 
-        "lr": {
-            "values": [0.001]
+    parser.add_argument("--learning_rate", "-lr", type=float, default=0.001, help="Learning rate")
+
+    # Guided Backprop and Visualise Filters Args
+    parser.add_argument("--n_cols", "-nc", type=int, default=4, help="Number of columns in display")
+    parser.add_argument("--filter_rgb", "-frgb", action='store_true', help="Display Filters as RGB image")
+
+    args = parser.parse_args()
+    return args
+
+def Runner_PartA_Train(args):
+    '''
+    Train Model
+    '''
+    # Load Wandb Data
+    WANDB_DATA = json.load(open("config.json", "r"))
+    # Sweep Setup
+    SWEEP_CONFIG = {
+        "name": "part-a-run-1",
+        "method": "grid",
+        "metric": {
+            "name": "val_accuracy",
+            "goal": "maximize"
+        },
+        "parameters": {
+            "n_epochs": {
+                "values": [args.epochs]
+            },
+            "batch_size": {
+                "values": [args.batch_size]
+            },
+
+            "filter_size": {
+                "values": [
+                    [int(x) for x in args.filter_size.split(",")]
+                ]
+            },
+            "n_filters": {
+                "values": [
+                    [int(x) for x in args.n_filters.split(",")]
+                ]
+            },
+            "dropout": {
+                "values": [args.dropout]
+            },
+            "batch_norm": {
+                "values": [args.no_batch_norm]
+            },
+
+            "dense_neurons": {
+                "values": [args.dense_neurons]
+            },
+            "dense_dropout": {
+                "values": [args.dense_dropout]
+            },
+
+            "lr": {
+                "values": [args.learning_rate]
+            }
         }
     }
-}
+    # Run Sweep
+    sweep_id = wandb.sweep(SWEEP_CONFIG, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"])
+    # sweep_id = ""
+    TRAINER_FUNC = functools.partial(Model_Sweep_Run, wandb_data=WANDB_DATA)
+    wandb.agent(sweep_id, TRAINER_FUNC, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"], count=1)
+    # Save Model
+    Model_SaveModel(Model_LoadModel("Models/best_model.h5"), args.model)
 
-# Run Sweep
-sweep_id = wandb.sweep(SWEEP_CONFIG, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"])
-# sweep_id = ""
-TRAINER_FUNC = functools.partial(Model_Sweep_Run, wandb_data=WANDB_DATA)
-wandb.agent(sweep_id, TRAINER_FUNC, project=WANDB_DATA["project_name"], entity=WANDB_DATA["user_name"], count=1)
+def Runner_PartA_Test(args):
+    '''
+    Test Model
+    '''
+    TestModel_RunTest(Model_LoadModel(args.model), X_shape=(227, 227, 3), Y_shape=len(DATASET_INATURALIST_CLASSES))
+
+def Runner_PartA_GuidedBackprop(args):
+    '''
+    Guided Backprop on model
+    '''
+    GuidedBackprop_Display(Model_LoadModel(args.model), X_shape=(227, 227, 3), Y_shape=len(DATASET_INATURALIST_CLASSES), nCols=3)
+
+def Runner_PartA_VisualiseFilters(args):
+    '''
+    Visualise Filters of model
+    '''
+    VisualiseFilter_Display(Model_LoadModel(args.model), rgb=args.filter_rgb, nCols=args.n_cols)
+
+# Run
+if __name__ == "__main__":
+    # Parse Args
+    ARGS = Runner_ParseArgs()
+    # Run
+    if ARGS.mode == "train":
+        Runner_PartA_Train(ARGS)
+    elif ARGS.mode == "test":
+        Runner_PartA_Test(ARGS)
+    elif ARGS.mode == "gb":
+        Runner_PartA_GuidedBackprop(ARGS)
+    elif ARGS.mode == "vf":
+        Runner_PartA_VisualiseFilters(ARGS)
+    else:
+        print("Invalid Mode!")

@@ -22,7 +22,7 @@ def TestModel_RunTest(MODEL, X_shape=(227, 227, 3), Y_shape=10):
     loss_test, eval_test = Model_Test(MODEL, DATASET_TEST)
     print("MODEL TEST:")
     print("Loss:", loss_test)
-    print("Eval:", eval_test)
+    print("Accuracy:", eval_test)
 
 # Run
 # Params
