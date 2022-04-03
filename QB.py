@@ -97,10 +97,13 @@ def Runner_ParseArgs():
     '''
     Parse Args
     '''
+    global DATASET_PATH_INATURALIST
+    
     parser = argparse.ArgumentParser(description="Training and Testing for DL Assignment 2 Part B")
 
     parser.add_argument("--mode", "-m", type=str, default="train", help="train or test")
     parser.add_argument("--model", "-ml", type=str, default="Models/Model_PartB.h5", help="Model path to use or save to")
+    parser.add_argument("--dataset", "-dt", type=str, default=DATASET_PATH_INATURALIST, help="Dataset path to use")
 
     parser.add_argument("--epochs", "-e", type=int, default=10, help="Number of epochs to train")
     parser.add_argument("--batch_size", "-b", type=int, default=256, help="Batch size")
@@ -113,6 +116,7 @@ def Runner_ParseArgs():
     parser.add_argument("--learning_rate", "-lr", type=float, default=0.0001, help="Learning rate")
 
     args = parser.parse_args()
+    DATASET_PATH_INATURALIST = args.dataset
     return args
 
 def Runner_PartB_Train(args):

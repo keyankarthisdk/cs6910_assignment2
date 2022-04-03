@@ -111,15 +111,25 @@ def CreateValidationDataset_INaturalist(path, classes, validation_split=0.1):
             shutil.move(os.path.join(train_path, c, I_path), os.path.join(save_path, c, I_path))
 
 # Get Random Image Path from Dataset @ N Kausik CS21M037
-def GetImagePath_Random():
+def GetImagePath_Random(dataset_path):
     '''
     Get Random Image Path in train dataset
     '''
-    dataset_path = os.path.join(DATASET_PATH_INATURALIST, "train")
+    dataset_path = os.path.join(dataset_path, "train")
     class_random = os.listdir(dataset_path)[np.random.randint(0, 10)]
     class_Is = os.listdir(os.path.join(dataset_path, class_random))
     I_name = class_Is[np.random.randint(0, len(class_Is))]
     I_path = os.path.join(dataset_path, class_random, I_name)
     return I_path, class_random
+
+def GetTestImagePath_Random(c):
+    '''
+    Get Random Test Image Path in class c
+    '''
+    dataset_path = os.path.join(DATASET_PATH_INATURALIST, "val")
+    class_Is = os.listdir(os.path.join(dataset_path, c))
+    I_name = class_Is[np.random.randint(0, len(class_Is))]
+    I_path = os.path.join(dataset_path, c, I_name)
+    return I_path
 
 # Run

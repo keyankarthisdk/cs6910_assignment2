@@ -19,12 +19,12 @@ def ReLu_GuidedBackProp(x):
     return tf.nn.relu(x), grad
 
 # Guided Backprop on a input model @ N Kausik CS21M037
-def GuidedBackprop_Display(MODEL, X_shape=(227, 227, 3), Y_shape=10, nCols=2):
+def GuidedBackprop_Display(MODEL, X_shape=(227, 227, 3), Y_shape=10, nCols=2, dataset_path=DATASET_PATH_INATURALIST):
     '''
     Display Guided Backpropogation on model
     '''
     # Load Random Dataset Image
-    I_path, I_class = GetImagePath_Random()
+    I_path, I_class = GetImagePath_Random(dataset_path)
     I = tf.keras.preprocessing.image.load_img(I_path, target_size=tuple(X_shape[:2]))
 
     # Init Guided Backprop Model

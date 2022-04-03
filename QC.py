@@ -91,8 +91,8 @@ def Runner_ParseArgs():
     '''
     parser = argparse.ArgumentParser(description="Testing for DL Assignment 2 Part C")
 
-    parser.add_argument("--model", "-ml", type=str, default="Models/PartC_YOLO.h5", help="YOLO model path to use")
     parser.add_argument("--mode", "-m", type=str, default="image", help="'image' or 'video'")
+    parser.add_argument("--model", "-ml", type=str, default="Models/PartC_YOLO.h5", help="YOLO model path to use")
     parser.add_argument("--input", "-i", type=str, default="", help="Input file path")
     parser.add_argument("--output", "-o", type=str, default="", help="Output save path")
 

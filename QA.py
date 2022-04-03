@@ -112,10 +112,13 @@ def Runner_ParseArgs():
     '''
     Parse Args
     '''
+    global DATASET_PATH_INATURALIST
+    
     parser = argparse.ArgumentParser(description="Training and Testing for DL Assignment 2 Part A")
 
     parser.add_argument("--mode", "-m", type=str, default="train", help="train | test | gb | vf")
     parser.add_argument("--model", "-ml", type=str, default="Models/Model_PartA.h5", help="Model path to use or save to")
+    parser.add_argument("--dataset", "-dt", type=str, default=DATASET_PATH_INATURALIST, help="Dataset path to use")
 
     # Train Args
     parser.add_argument("--epochs", "-e", type=int, default=20, help="Number of epochs to train")
@@ -135,6 +138,7 @@ def Runner_ParseArgs():
     parser.add_argument("--filter_rgb", "-frgb", action='store_true', help="Display Filters as RGB image")
 
     args = parser.parse_args()
+    DATASET_PATH_INATURALIST = args.dataset
     return args
 
 def Runner_PartA_Train(args):
@@ -206,7 +210,7 @@ def Runner_PartA_GuidedBackprop(args):
     '''
     Guided Backprop on model
     '''
-    GuidedBackprop_Display(Model_LoadModel(args.model), X_shape=(227, 227, 3), Y_shape=len(DATASET_INATURALIST_CLASSES), nCols=3)
+    GuidedBackprop_Display(Model_LoadModel(args.model), X_shape=(227, 227, 3), Y_shape=len(DATASET_INATURALIST_CLASSES), nCols=3, dataset_path=DATASET_PATH_INATURALIST)
 
 def Runner_PartA_VisualiseFilters(args):
     '''

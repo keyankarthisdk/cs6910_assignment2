@@ -19,16 +19,19 @@ def VisualiseFilter_Display(MODEL, rgb=True, nCols=4):
     f_min, f_max = filters.min(), filters.max()
     filters = (filters - f_min) / (f_max - f_min)
     # Show Filters
+    plt.figure(figsize=(6, 48))
     N_FILTERS, f_i = filters.shape[3], 1
     for i in range(N_FILTERS):
         f = filters[:, :, :, i]
         if rgb:
             plt.subplot(math.ceil(N_FILTERS/nCols), nCols, f_i)
+            plt.axis("off")
             plt.imshow(f)
             f_i += 1
         else:
             for j in range(f.shape[2]):
                 plt.subplot(N_FILTERS, f.shape[2], f_i)
+                plt.axis("off")
                 plt.imshow(f[:, :, j], cmap='gray')
                 f_i += 1
     plt.show()
