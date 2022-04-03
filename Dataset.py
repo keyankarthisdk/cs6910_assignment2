@@ -87,6 +87,29 @@ def LoadTestDataset_INaturalist(
     
     return dataset_test
 
+# Split Train into Train and Val Dataset @ N Kausik CS21M037
+def CreateValidationDataset_INaturalist(path, classes, validation_split=0.1):
+    '''
+    Create Validation Dataset
+    '''
+    train_path = os.path.join(path, "train")
+    save_path = os.path.join(path, "validation")
+    try:
+        shutil.rmtree(save_path)
+    except:
+        pass
+    os.mkdir(save_path)
+    # Add Images
+    for c in classes:
+        os.mkdir(os.path.join(save_path, c))
+        Is_train = os.listdir(os.path.join(train_path, c))
+        Is_train_filtered = list(filter(lambda n: n != ".DS_Store", Is_train))
+        count = len(Is_train_filtered)
+        np.random.shuffle(Is_train_filtered)
+        Is_val = Is_train_filtered[:round(validation_split*count)]
+        for I_path in Is_val:
+            shutil.move(os.path.join(train_path, c, I_path), os.path.join(save_path, c, I_path))
+
 # Get Random Image Path from Dataset @ N Kausik CS21M037
 def GetImagePath_Random():
     '''
